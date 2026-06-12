@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinTrack — ThunderingGunners</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f14; --surface: #161a22; --surface2: #1e2330; --border: #2a3040;
+      --accent: #4fffb0; --accent-dim: rgba(79,255,176,0.12);
+      --accent2: #ff6b6b; --accent2-dim: rgba(255,107,107,0.12);
+      --text: #e8eaf0; --text-muted: #6b7590; --text-dim: #9aa0b5;
+      --income: #4fffb0; --expense: #ff6b6b; --warning: #ffd166;
+      --radius: 12px; --radius-sm: 8px;
+      --font-display: 'Syne', sans-serif; --font-mono: 'DM Mono', monospace; --font-body: 'DM Sans', sans-serif;
+    }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; overflow-x: hidden; }
+    #sidebar { width: 220px; min-height: 100vh; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .sidebar-logo { padding: 24px 20px 16px; font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo span { color: var(--text-muted); font-weight: 400; font-size: 12px; display: block; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 12px 0; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 20px; cursor: pointer; color: var(--text-dim); font-size: 14px; font-weight: 500; transition: all 0.15s; border-left: 3px solid transparent; user-select: none; }
+    .nav-item:hover { color: var(--text); background: var(--surface2); }
+    .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+    .nav-item .icon { font-size: 18px; width: 22px; text-align: center; }
+    .nav-badge { margin-left: auto; background: var(--accent2); color: #fff; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 2px 7px; min-width: 20px; text-align: center; }
+    .sidebar-user { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 34px; height: 34px; background: var(--accent-dim); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; color: var(--accent); font-size: 14px; flex-shrink: 0; }
+    .user-info { flex: 1; overflow: hidden; }
+    .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-email { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .logout-btn { cursor: pointer; color: var(--text-muted); font-size: 18px; }
+    .logout-btn:hover { color: var(--accent2); }
+    #main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar { padding: 18px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); position: sticky; top: 0; z-index: 50; }
+    .page-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+    .topbar-actions { display: flex; gap: 10px; }
+    .page { display: none; padding: 28px 32px; }
+    .page.active { display: block; }
+    #auth-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; width: 100%; max-width: 420px; }
+    .auth-logo { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+    .auth-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+    .auth-tabs { display: flex; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .auth-tab { padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input, .form-select { width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; font-family: var(--font-body); outline: none; transition: border-color 0.15s; }
+    .form-input:focus, .form-select:focus { border-color: var(--accent); }
+    .form-select option { background: var(--surface2); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn { padding: 10px 18px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: var(--font-body); display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: var(--accent); color: #0d1a14; }
+    .btn-primary:hover { background: #3ee89a; }
+    .btn-danger { background: var(--accent2-dim); color: var(--accent2); border: 1px solid var(--accent2); }
+    .btn-danger:hover { background: var(--accent2); color: #fff; }
+    .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-full { width: 100%; justify-content: center; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .stat-card.income::before { background: var(--income); }
+    .stat-card.expense::before { background: var(--expense); }
+    .stat-card.balance::before { background: var(--warning); }
+    .stat-card.total::before { background: #7c6fff; }
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 500; }
+    .stat-card.income .stat-value { color: var(--income); }
+    .stat-card.expense .stat-value { color: var(--expense); }
+    .stat-card.balance .stat-value { color: var(--warning); }
+    .stat-card.total .stat-value { color: #7c6fff; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+    tbody td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .badge-income { background: rgba(79,255,176,0.15); color: var(--income); }
+    .badge-expense { background: rgba(255,107,107,0.15); color: var(--expense); }
+    .amount-income { color: var(--income); font-family: var(--font-mono); }
+    .amount-expense { color: var(--expense); font-family: var(--font-mono); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 500; backdrop-filter: blur(4px); }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+    .modal-close { cursor: pointer; color: var(--text-muted); font-size: 22px; line-height: 1; }
+    .modal-close:hover { color: var(--text); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+    .progress-wrap { background: var(--surface2); border-radius: 4px; height: 8px; overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: 4px; transition: width 0.4s; background: var(--accent); }
+    .progress-bar.warning { background: var(--warning); }
+    .progress-bar.danger { background: var(--expense); }
+    .budget-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .budget-item:last-child { border-bottom: none; }
+    .budget-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .budget-category { font-weight: 600; font-size: 14px; }
+    .budget-amounts { font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); }
+    .chart-container { display: flex; align-items: center; gap: 24px; }
+    .chart-legend { flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .notif-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+    .notif-dot.read { background: var(--border); }
+    .notif-msg { flex: 1; font-size: 14px; }
+    .notif-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .error-msg { color: var(--expense); font-size: 13px; margin-top: 8px; padding: 10px 14px; background: var(--accent2-dim); border-radius: var(--radius-sm); border: 1px solid rgba(255,107,107,0.3); }
+    #toast { position: fixed; bottom: 28px; right: 28px; padding: 12px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.3s; max-width: 320px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { background: var(--accent); color: #0d1a14; }
+    #toast.error { background: var(--accent2); color: #fff; }
+    .empty { text-align: center; padding: 48px 0; color: var(--text-muted); }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+    .account-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .account-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .account-name { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .account-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; min-height: 18px; }
+    .account-balance { font-family: var(--font-mono); font-size: 24px; font-weight: 500; color: var(--accent); }
+    .account-actions { display: flex; gap: 8px; margin-top: 14px; }
+    @media (max-width: 900px) { #sidebar { transform: translateX(-100%); } #main { margin-left: 0; } .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">FinTrack</div>
+    <div class="auth-subtitle">Control financiero personal</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="showAuthTab('login')">Iniciar sesión</div>
+      <div class="auth-tab" onclick="showAuthTab('register')">Registrarse</div>
+    </div>
+    <div id="login-form">
+      <div class="form-group"><label class="form-label">Email</label><input type="email" id="login-email" class="form-input" placeholder="tu@email.com" /></div>
+      <div class="form-group"><label class="form-label">Contraseña</label><input type="password" id="login-password" class="form-input" placeholder="••••••" /></div>
+      <div id="login-error" style="display:none" class="error-msg"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="doLogin()">Entrar</button>
+    </div>
+    <div id="register-form" style="display:none">
+      <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="reg-name" class="form-input" placeholder="Tu nombre" /></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" id="reg-email" class="form-input" placeholder="tu@email.com" /></div>
+      <div class="form-group"><label class="form-label">Contraseña</label><input type="password" id="reg-password" class="form-input" placeholder="Mínimo 6 caracteres" /></div>
+      <div id="register-error" style="display:none" class="error-msg"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="doRegister()">Crear cuenta</button>
+    </div>
+  </div>
+</div>
+
+<div id="app-screen" style="display:none; width:100%;">
+  <nav id="sidebar">
+    <div class="sidebar-logo">FinTrack <span>ThunderingGunners</span></div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="navigate('dashboard')"><span class="icon">⬡</span> Dashboard</div>
+      <div class="nav-item" onclick="navigate('accounts')"><span class="icon">◈</span> Cuentas</div>
+      <div class="nav-item" onclick="navigate('transactions')"><span class="icon">⇌</span> Movimientos</div>
+      <div class="nav-item" onclick="navigate('budgets')"><span class="icon">◎</span> Presupuestos</div>
+      <div class="nav-item" onclick="navigate('reports')"><span class="icon">◉</span> Reportes</div>
+      <div class="nav-item" onclick="navigate('notifications')"><span class="icon">◌</span> Notificaciones <span class="nav-badge" id="notif-badge" style="display:none">0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">U</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Usuario</div>
+        <div class="user-email" id="user-email">email</div>
+      </div>
+      <div class="logout-btn" onclick="doLogout()" title="Cerrar sesión">⏻</div>
+    </div>
+  </nav>
+  <div id="main">
+    <div class="topbar">
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </div>
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card income"><div class="stat-label">Ingresos del mes</div><div class="stat-value" id="dash-income">$0</div></div>
+        <div class="stat-card expense"><div class="stat-label">Egresos del mes</div><div class="stat-value" id="dash-expense">$0</div></div>
+        <div class="stat-card balance"><div class="stat-label">Balance neto</div><div class="stat-value" id="dash-balance">$0</div></div>
+        <div class="stat-card total"><div class="stat-label">Saldo total</div><div class="stat-value" id="dash-total">$0</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-title">Gastos por categoría</div><div class="chart-container"><canvas id="pie-chart" width="160" height="160"></canvas><div class="chart-legend" id="pie-legend"></div></div></div>
+        <div class="card"><div class="card-title">Últimos movimientos</div><div id="recent-transactions"></div></div>
+      </div>
+    </div>
+    <div class="page" id="page-accounts"><div class="account-cards" id="accounts-grid"></div></div>
+    <div class="page" id="page-transactions">
+      <div class="card" style="margin-bottom:16px">
+        <div class="grid-3" style="gap:12px;align-items:end">
+          <div class="form-group" style="margin:0"><label class="form-label">Cuenta</label><select class="form-select" id="filter-account" onchange="loadTransactions()"><option value="">Todas</option></select></div>
+          <div class="form-group" style="margin:0"><label class="form-label">Categoría</label><input type="text" class="form-input" id="filter-category" placeholder="Filtrar..." onchange="loadTransactions()" /></div>
+          <div style="display:flex;gap:8px">
+            <div class="form-group" style="margin:0;flex:1"><label class="form-label">Desde</label><input type="date" class="form-input" id="filter-from" onchange="loadTransactions()" /></div>
+            <div class="form-group" style="margin:0;flex:1"><label class="form-label">Hasta</label><input type="date" class="form-input" id="filter-to" onchange="loadTransactions()" /></div>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Categoría</th><th>Descripción</th><th>Tipo</th><th>Monto</th><th>Acciones</th></tr></thead><tbody id="transactions-tbody"></tbody></table><div id="transactions-empty" class="empty" style="display:none"><div class="empty-icon">⇌</div><div class="empty-text">No hay movimientos registrados</div></div></div></div>
+    </div>
+    <div class="page" id="page-budgets"><div class="card"><div id="budgets-list"></div><div id="budgets-empty" class="empty" style="display:none"><div class="empty-icon">◎</div><div class="empty-text">No hay presupuestos para este mes</div></div></div></div>
+    <div class="page" id="page-reports">
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card income"><div class="stat-label">Ingresos</div><div class="stat-value" id="rep-income">$0</div></div>
+        <div class="stat-card expense"><div class="stat-label">Egresos</div><div class="stat-value" id="rep-expense">$0</div></div>
+        <div class="stat-card balance"><div class="stat-label">Balance neto</div><div class="stat-value" id="rep-balance">$0</div></div>
+      </div>
+      <div class="card"><div class="card-title">Egresos por categoría</div><div id="cat-bars"></div></div>
+    </div>
+    <div class="page" id="page-notifications"><div class="card"><div id="notif-list"></div><div id="notif-empty" class="empty" style="display:none"><div class="empty-icon">◌</div><div class="empty-text">Sin notificaciones</div></div></div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div class="modal-overlay" id="modal-transaction">
+  <div class="modal">
+    <div class="modal-title"><span id="modal-tx-title">Nuevo movimiento</span><span class="modal-close" onclick="closeModal('modal-transaction')">×</span></div>
+    <input type="hidden" id="tx-id" />
+    <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="tx-type"><option value="income">Ingreso</option><option value="expense">Egreso</option></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" class="form-input" id="tx-amount" placeholder="0.00" min="0.01" step="0.01" /></div>
+      <div class="form-group"><label class="form-label">Fecha</label><input type="datetime-local" class="form-input" id="tx-date" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="tx-category"><option>Comida</option><option>Transporte</option><option>Entretenimiento</option><option>Salud</option><option>Educación</option><option>Servicios</option><option>Ropa</option><option>Vivienda</option><option>Sueldo</option><option>Freelance</option><option>Inversión</option><option>Otro</option></select></div>
+      <div class="form-group"><label class="form-label">Cuenta</label><select class="form-select" id="tx-account"></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Descripción (opcional)</label><input type="text" class="form-input" id="tx-description" placeholder="Descripción del movimiento" maxlength="255" /></div>
+    <div id="tx-error" style="display:none" class="error-msg"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-transaction')">Cancelar</button><button class="btn btn-primary" onclick="saveTransaction()">Guardar</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-account">
+  <div class="modal">
+    <div class="modal-title"><span id="modal-acc-title">Nueva cuenta</span><span class="modal-close" onclick="closeModal('modal-account')">×</span></div>
+    <input type="hidden" id="acc-id" />
+    <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input" id="acc-name" placeholder="Ej: Efectivo, Banco, Mercado Pago" maxlength="100" /></div>
+    <div class="form-group"><label class="form-label">Descripción (opcional)</label><input type="text" class="form-input" id="acc-description" placeholder="Descripción opcional" maxlength="255" /></div>
+    <div class="form-group" id="acc-balance-group"><label class="form-label">Saldo inicial ($)</label><input type="number" class="form-input" id="acc-balance" placeholder="0.00" min="0" step="0.01" value="0" /></div>
+    <div id="acc-error" style="display:none" class="error-msg"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-account')">Cancelar</button><button class="btn btn-primary" onclick="saveAccount()">Guardar</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-budget">
+  <div class="modal">
+    <div class="modal-title"><span>Nuevo presupuesto</span><span class="modal-close" onclick="closeModal('modal-budget')">×</span></div>
+    <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="budget-category"><option>Comida</option><option>Transporte</option><option>Entretenimiento</option><option>Salud</option><option>Educación</option><option>Servicios</option><option>Ropa</option><option>Vivienda</option><option>Otro</option></select></div>
+    <div class="form-group"><label class="form-label">Límite mensual ($)</label><input type="number" class="form-input" id="budget-limit" placeholder="50000" min="1" step="0.01" /></div>
+    <div id="budget-error" style="display:none" class="error-msg"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-budget')">Cancelar</button><button class="btn btn-primary" onclick="saveBudget()">Guardar</button></div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+let token = localStorage.getItem('fintrack_token');
+let currentUser = JSON.parse(localStorage.getItem('fintrack_user') || 'null');
+let accounts = [];
+let transactions = [];
+
+function fmt(n) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format(n);
+}
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 3000);
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function apiFetch(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${API}${path}`, { ...options, headers });
+  if (res.status === 204) return null;
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error(`Error del servidor: ${text.slice(0, 120)}`); }
+  if (!res.ok) {
+    const msg = Array.isArray(data.detail)
+      ? data.detail.map(e => e.msg).join(', ')
+      : (typeof data.detail === 'string' ? data.detail : 'Error desconocido');
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function showAuthTab(tab) {
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((el, i) => {
+    el.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
+  });
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  if (!email || !password) { errEl.textContent = 'Completá todos los campos'; errEl.style.display = 'block'; return; }
+  try {
+    const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    token = data.access_token; currentUser = data.user;
+    localStorage.setItem('fintrack_token', token);
+    localStorage.setItem('fintrack_user', JSON.stringify(currentUser));
+    initApp();
+  } catch (e) { errEl.textContent = e.message || 'Error al iniciar sesión'; errEl.style.display = 'block'; }
+}
+
+async function doRegister() {
+  const username = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const errEl = document.getElementById('register-error');
+  errEl.style.display = 'none';
+  const errors = [];
+  if (!username || username.length < 2) errors.push('Nombre: mínimo 2 caracteres');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('Email inválido');
+  if (!password || password.length < 6) errors.push('Contraseña: mínimo 6 caracteres');
+  if (errors.length) { errEl.textContent = errors.join(' · '); errEl.style.display = 'block'; return; }
+  try {
+    await apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ email, username, password }) });
+    showToast('Cuenta creada. Iniciá sesión.');
+    showAuthTab('login');
+  } catch (e) { errEl.textContent = e.message || 'Error al registrarse'; errEl.style.display = 'block'; }
+}
+
+function doLogout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('fintrack_token');
+  localStorage.removeItem('fintrack_user');
+  accounts = []; transactions = [];
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+}
+
+function initApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+  document.getElementById('user-name').textContent = currentUser?.username || '';
+  document.getElementById('user-email').textContent = currentUser?.email || '';
+  document.getElementById('user-avatar').textContent = (currentUser?.username || 'U')[0].toUpperCase();
+  navigate('dashboard');
+  loadNotifBadge();
+}
+
+// Auto-login si hay token guardado
+window.addEventListener('DOMContentLoaded', () => {
+  if (token && currentUser) {
+    try { initApp(); } catch(e) { doLogout(); }
+  }
+});
+
+const pageLabels = { dashboard: 'Dashboard', accounts: 'Cuentas', transactions: 'Movimientos', budgets: 'Presupuestos', reports: 'Reportes', notifications: 'Notificaciones' };
+const pageActions = {
+  accounts: '<button class="btn btn-primary btn-sm" onclick="openNewAccount()">+ Nueva cuenta</button>',
+  transactions: '<button class="btn btn-primary btn-sm" onclick="openNewTransaction()">+ Movimiento</button>',
+  budgets: '<button class="btn btn-primary btn-sm" onclick="openModal(\'modal-budget\')">+ Presupuesto</button>',
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pageEl = document.getElementById(`page-${page}`);
+  const navEl = document.querySelector(`.nav-item[onclick="navigate('${page}')"]`);
+  if (!pageEl || !navEl) return;
+  pageEl.classList.add('active');
+  navEl.classList.add('active');
+  document.getElementById('page-title').textContent = pageLabels[page] || page;
+  document.getElementById('topbar-actions').innerHTML = pageActions[page] || '';
+  const loaders = { dashboard: loadDashboard, accounts: loadAccounts, transactions: loadTransactions, budgets: loadBudgets, reports: loadReports, notifications: loadNotifications };
+  if (loaders[page]) loaders[page]();
+}
+
+async function loadDashboard() {
+  try {
+    const [summary, catReport, accs, txs] = await Promise.all([
+      apiFetch('/api/reports/summary'), apiFetch('/api/reports/by-category'),
+      apiFetch('/api/accounts'), apiFetch('/api/transactions'),
+    ]);
+    accounts = accs; transactions = txs;
+    document.getElementById('dash-income').textContent = fmt(summary.total_income);
+    document.getElementById('dash-expense').textContent = fmt(summary.total_expense);
+    document.getElementById('dash-balance').textContent = fmt(summary.net_balance);
+    document.getElementById('dash-total').textContent = fmt(accs.reduce((s, a) => s + a.balance, 0));
+    drawPieChart(catReport);
+    renderRecentTransactions(txs.slice(0, 6), accs);
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+function drawPieChart(data) {
+  const canvas = document.getElementById('pie-chart');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 160, 160);
+  const legend = document.getElementById('pie-legend');
+  if (!data.length) {
+    ctx.fillStyle = '#2a3040'; ctx.beginPath(); ctx.arc(80, 80, 70, 0, Math.PI * 2); ctx.fill();
+    legend.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Sin datos</div>'; return;
+  }
+  const colors = ['#4fffb0','#ff6b6b','#ffd166','#7c6fff','#4ecdc4','#ff9f43','#54a0ff','#5f27cd','#48dbfb','#ff9ff3'];
+  let startAngle = -Math.PI / 2; let legendHTML = '';
+  data.forEach((item, i) => {
+    const color = colors[i % colors.length];
+    const slice = (item.percentage / 100) * Math.PI * 2;
+    ctx.beginPath(); ctx.moveTo(80, 80); ctx.arc(80, 80, 70, startAngle, startAngle + slice); ctx.closePath();
+    ctx.fillStyle = color; ctx.fill(); startAngle += slice;
+    legendHTML += `<div class="legend-item"><div class="legend-dot" style="background:${color}"></div><span>${item.category}</span><span style="margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">${item.percentage.toFixed(1)}%</span></div>`;
+  });
+  ctx.beginPath(); ctx.arc(80, 80, 36, 0, Math.PI * 2); ctx.fillStyle = '#161a22'; ctx.fill();
+  legend.innerHTML = legendHTML;
+}
+
+function renderRecentTransactions(txs, accs) {
+  const el = document.getElementById('recent-transactions');
+  if (!txs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">⇌</div><div class="empty-text">Sin movimientos</div></div>'; return; }
+  const accMap = Object.fromEntries(accs.map(a => [a.id, a.name]));
+  el.innerHTML = txs.map(t => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:${t.type==='income'?'rgba(79,255,176,0.12)':'rgba(255,107,107,0.12)'}">
+        <span style="font-size:16px">${t.type==='income'?'↑':'↓'}</span>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${t.category}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${accMap[t.account_id]||''} · ${fmtDate(t.date)}</div>
+      </div>
+      <div class="${t.type==='income'?'amount-income':'amount-expense'}" style="font-size:14px">${t.type==='income'?'+':'-'}${fmt(t.amount)}</div>
+    </div>`).join('');
+}
+
+async function loadAccounts() {
+  try {
+    accounts = await apiFetch('/api/accounts');
+    renderAccounts();
+    populateAccountSelects();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+function renderAccounts() {
+  const grid = document.getElementById('accounts-grid');
+  if (!accounts.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">◈</div><div class="empty-text">No tenés cuentas. ¡Creá una!</div></div>'; return; }
+  grid.innerHTML = accounts.map(a => `
+    <div class="account-card">
+      <div class="account-name">${a.name}</div>
+      <div class="account-desc">${a.description || '—'}</div>
+      <div class="account-balance">${fmt(a.balance)}</div>
+      <div class="account-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEditAccount(${a.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="removeAccount(${a.id})">Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+function populateAccountSelects() {
+  ['tx-account', 'filter-account'].forEach(id => {
+    const sel = document.getElementById(id); if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = id === 'filter-account' ? '<option value="">Todas</option>' : '';
+    accounts.forEach(a => { const opt = document.createElement('option'); opt.value = a.id; opt.textContent = a.name; sel.appendChild(opt); });
+    if (prev) sel.value = prev;
+  });
+}
+
+function openNewAccount() {
+  document.getElementById('acc-id').value = ''; document.getElementById('acc-name').value = '';
+  document.getElementById('acc-description').value = ''; document.getElementById('acc-balance').value = '0';
+  document.getElementById('acc-balance-group').style.display = 'block';
+  document.getElementById('modal-acc-title').textContent = 'Nueva cuenta';
+  document.getElementById('acc-error').style.display = 'none';
+  openModal('modal-account');
+}
+
+function openEditAccount(id) {
+  const acc = accounts.find(a => a.id === id); if (!acc) return;
+  document.getElementById('acc-id').value = acc.id; document.getElementById('acc-name').value = acc.name;
+  document.getElementById('acc-description').value = acc.description || '';
+  document.getElementById('acc-balance-group').style.display = 'none';
+  document.getElementById('modal-acc-title').textContent = 'Editar cuenta';
+  document.getElementById('acc-error').style.display = 'none';
+  openModal('modal-account');
+}
+
+async function saveAccount() {
+  const id = document.getElementById('acc-id').value;
+  const name = document.getElementById('acc-name').value.trim();
+  const description = document.getElementById('acc-description').value.trim();
+  const errEl = document.getElementById('acc-error');
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'El nombre es obligatorio'; errEl.style.display = 'block'; return; }
+  if (name.length > 100) { errEl.textContent = 'Máximo 100 caracteres'; errEl.style.display = 'block'; return; }
+  try {
+    if (id) {
+      await apiFetch(`/api/accounts/${id}`, { method: 'PUT', body: JSON.stringify({ name, description: description || null }) });
+      showToast('Cuenta actualizada');
+    } else {
+      const balance = parseFloat(document.getElementById('acc-balance').value) || 0;
+      if (balance < 0) { errEl.textContent = 'El saldo inicial no puede ser negativo'; errEl.style.display = 'block'; return; }
+      await apiFetch('/api/accounts', { method: 'POST', body: JSON.stringify({ name, description: description || null, initial_balance: balance }) });
+      showToast('Cuenta creada');
+    }
+    closeModal('modal-account');
+    accounts = await apiFetch('/api/accounts');
+    renderAccounts();
+    populateAccountSelects();
+  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+}
+
+async function removeAccount(id) {
+  if (!confirm('¿Eliminar esta cuenta? Solo se puede si no tiene movimientos.')) return;
+  try {
+    await apiFetch(`/api/accounts/${id}`, { method: 'DELETE' });
+    showToast('Cuenta eliminada');
+    accounts = await apiFetch('/api/accounts');
+    renderAccounts();
+    populateAccountSelects();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function loadTransactions() {
+  if (!accounts.length) accounts = await apiFetch('/api/accounts');
+  populateAccountSelects();
+  const accountId = document.getElementById('filter-account')?.value;
+  const category = document.getElementById('filter-category')?.value.trim();
+  const fromDate = document.getElementById('filter-from')?.value;
+  const toDate = document.getElementById('filter-to')?.value;
+  const params = new URLSearchParams();
+  if (accountId) params.set('account_id', accountId);
+  if (category) params.set('category', category);
+  if (fromDate) params.set('from_date', new Date(fromDate).toISOString());
+  if (toDate) params.set('to_date', new Date(toDate).toISOString());
+  try {
+    transactions = await apiFetch('/api/transactions?' + params.toString());
+    renderTransactions();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+function renderTransactions() {
+  const tbody = document.getElementById('transactions-tbody');
+  const empty = document.getElementById('transactions-empty');
+  const accMap = Object.fromEntries(accounts.map(a => [a.id, a.name]));
+  if (!transactions.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = transactions.map(t => `
+    <tr>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">${fmtDate(t.date)}</td>
+      <td>${accMap[t.account_id] || '—'}</td>
+      <td>${t.category}</td>
+      <td style="color:var(--text-muted);font-size:13px">${t.description || '—'}</td>
+      <td><span class="badge badge-${t.type}">${t.type === 'income' ? 'Ingreso' : 'Egreso'}</span></td>
+      <td class="${t.type === 'income' ? 'amount-income' : 'amount-expense'}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="openEditTransaction(${t.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="removeTransaction(${t.id})">×</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openNewTransaction() {
+  if (!accounts.length) { showToast('Primero creá una cuenta', 'error'); navigate('accounts'); return; }
+  document.getElementById('tx-id').value = ''; document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-description').value = '';
+  document.getElementById('tx-date').value = new Date().toISOString().slice(0, 16);
+  document.getElementById('modal-tx-title').textContent = 'Nuevo movimiento';
+  document.getElementById('tx-error').style.display = 'none';
+  populateAccountSelects();
+  openModal('modal-transaction');
+}
+
+function openEditTransaction(id) {
+  const tx = transactions.find(t => t.id === id); if (!tx) return;
+  document.getElementById('tx-id').value = tx.id; document.getElementById('tx-amount').value = tx.amount;
+  document.getElementById('tx-type').value = tx.type; document.getElementById('tx-category').value = tx.category;
+  document.getElementById('tx-description').value = tx.description || '';
+  document.getElementById('tx-date').value = tx.date.slice(0, 16);
+  document.getElementById('modal-tx-title').textContent = 'Editar movimiento';
+  document.getElementById('tx-error').style.display = 'none';
+  populateAccountSelects();
+  document.getElementById('tx-account').value = tx.account_id;
+  openModal('modal-transaction');
+}
+
+async function saveTransaction() {
+  const id = document.getElementById('tx-id').value;
+  const amount = document.getElementById('tx-amount').value;
+  const type = document.getElementById('tx-type').value;
+  const category = document.getElementById('tx-category').value;
+  const description = document.getElementById('tx-description').value.trim();
+  const date = document.getElementById('tx-date').value;
+  const accountId = document.getElementById('tx-account').value;
+  const errEl = document.getElementById('tx-error');
+  errEl.style.display = 'none';
+  const errors = [];
+  const parsedAmount = parseFloat(amount);
+  if (isNaN(parsedAmount) || parsedAmount <= 0) errors.push('El monto debe ser mayor a 0');
+  if (!category) errors.push('Categoría obligatoria');
+  if (!date) errors.push('Fecha obligatoria');
+  else if (new Date(date) > new Date()) errors.push('No se permiten fechas futuras');
+  if (!accountId) errors.push('Seleccioná una cuenta');
+  if (errors.length) { errEl.textContent = errors.join(' · '); errEl.style.display = 'block'; return; }
+  const payload = {
+    amount: Math.round(parsedAmount * 100) / 100, type, category,
+    description: description || null,
+    date: new Date(date).toISOString(),
+    account_id: parseInt(accountId),
+  };
+  try {
+    if (id) {
+      await apiFetch(`/api/transactions/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      showToast('Movimiento actualizado');
+    } else {
+      await apiFetch('/api/transactions', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('Movimiento registrado');
+    }
+    closeModal('modal-transaction');
+    loadTransactions();
+    loadNotifBadge();
+  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+}
+
+async function removeTransaction(id) {
+  if (!confirm('¿Eliminar este movimiento?')) return;
+  try {
+    await apiFetch(`/api/transactions/${id}`, { method: 'DELETE' });
+    showToast('Movimiento eliminado');
+    loadTransactions();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function loadBudgets() {
+  try {
+    const budgets = await apiFetch('/api/budgets');
+    const list = document.getElementById('budgets-list');
+    const empty = document.getElementById('budgets-empty');
+    if (!budgets.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    list.innerHTML = budgets.map(b => {
+      const cls = b.percentage >= 100 ? 'danger' : b.percentage >= 80 ? 'warning' : '';
+      return `<div class="budget-item">
+        <div class="budget-header"><span class="budget-category">${b.category}</span><span class="budget-amounts">${fmt(b.spent)} / ${fmt(b.limit_amount)}</span></div>
+        <div class="progress-wrap"><div class="progress-bar ${cls}" style="width:${Math.min(b.percentage, 100)}%"></div></div>
+        <div style="margin-top:5px;font-size:11px;color:${b.percentage>=100?'var(--expense)':b.percentage>=80?'var(--warning)':'var(--text-muted)'}">
+          ${b.percentage.toFixed(1)}% usado ${b.percentage >= 100 ? '⚠️ Límite superado' : b.percentage >= 80 ? '🔔 Cerca del límite' : ''}
+        </div></div>`;
+    }).join('');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function saveBudget() {
+  const category = document.getElementById('budget-category').value;
+  const limit = document.getElementById('budget-limit').value;
+  const errEl = document.getElementById('budget-error');
+  errEl.style.display = 'none';
+  const parsedLimit = parseFloat(limit);
+  if (isNaN(parsedLimit) || parsedLimit <= 0) { errEl.textContent = 'El límite debe ser mayor a 0'; errEl.style.display = 'block'; return; }
+  const now = new Date();
+  try {
+    await apiFetch('/api/budgets', { method: 'POST', body: JSON.stringify({ category, limit_amount: parsedLimit, month: now.getMonth() + 1, year: now.getFullYear() }) });
+    showToast('Presupuesto creado');
+    closeModal('modal-budget');
+    loadBudgets();
+  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+}
+
+async function loadReports() {
+  try {
+    const [summary, catReport] = await Promise.all([apiFetch('/api/reports/summary'), apiFetch('/api/reports/by-category')]);
+    document.getElementById('rep-income').textContent = fmt(summary.total_income);
+    document.getElementById('rep-expense').textContent = fmt(summary.total_expense);
+    document.getElementById('rep-balance').textContent = fmt(summary.net_balance);
+    const bars = document.getElementById('cat-bars');
+    if (!catReport.length) { bars.innerHTML = '<div class="empty"><div class="empty-icon">◉</div><div class="empty-text">Sin datos del mes</div></div>'; return; }
+    const colors = ['#4fffb0','#ff6b6b','#ffd166','#7c6fff','#4ecdc4','#ff9f43','#54a0ff','#5f27cd'];
+    bars.innerHTML = catReport.map((c, i) => `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px">
+          <span style="font-weight:600">${c.category}</span>
+          <span style="font-family:var(--font-mono);color:var(--text-muted)">${fmt(c.total)} (${c.percentage.toFixed(1)}%)</span>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:${c.percentage}%;background:${colors[i%colors.length]}"></div></div>
+      </div>`).join('');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function loadNotifications() {
+  try {
+    const notifs = await apiFetch('/api/notifications');
+    const list = document.getElementById('notif-list');
+    const empty = document.getElementById('notif-empty');
+    if (!notifs.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    list.innerHTML = notifs.map(n => `
+      <div class="notif-item">
+        <div class="notif-dot ${n.is_read ? 'read' : ''}"></div>
+        <div style="flex:1">
+          <div class="notif-msg" style="${n.is_read ? 'color:var(--text-muted)' : ''}">${n.message}</div>
+          <div class="notif-date">${fmtDate(n.created_at)}</div>
+        </div>
+        ${!n.is_read ? `<button class="btn btn-ghost btn-sm" onclick="markRead(${n.id})">Marcar leída</button>` : ''}
+      </div>`).join('');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function markRead(id) {
+  try { await apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH' }); loadNotifications(); loadNotifBadge(); }
+  catch (e) { showToast(e.message, 'error'); }
+}
+
+async function loadNotifBadge() {
+  try {
+    const notifs = await apiFetch('/api/notifications');
+    const unread = notifs.filter(n => !n.is_read).length;
+    const badge = document.getElementById('notif-badge');
+    badge.style.display = unread > 0 ? 'inline-block' : 'none';
+    badge.textContent = unread;
+  } catch {}
+}
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('reg-password').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+</script>
+</body>
+</html>

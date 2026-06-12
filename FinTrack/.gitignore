@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Variables de entorno — NUNCA subir a GitHub
+.env
+
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / TypeScript
+node_modules/
+frontend/dist/
+frontend/build/
+*.js.map
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
